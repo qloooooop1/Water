@@ -10,13 +10,14 @@
       --primary-dark: #1976d2;
       --light: #e3f2fd;
       --gray: #757575;
+      --success: #4caf50;
     }
 
     body {
       font-family: system-ui, -apple-system, sans-serif;
       background: linear-gradient(135deg, #e0f7fa, #bbdefb);
       min-height: 100vh;
-      padding: 20px;
+      padding: 20px 15px;
       color: #333;
       margin: 0;
     }
@@ -33,20 +34,20 @@
     .header {
       background: var(--primary);
       color: white;
-      padding: 30px 20px 20px;
+      padding: 30px 20px 25px;
       text-align: center;
     }
 
     .header h1 {
       font-size: 1.9rem;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
 
     .progress-circle {
       position: relative;
-      width: 140px;
-      height: 140px;
-      margin: 25px auto 15px;
+      width: 160px;
+      height: 160px;
+      margin: 20px auto 10px;
     }
 
     .progress-circle svg {
@@ -64,7 +65,7 @@
     .progress-circle .progress {
       stroke: white;
       stroke-linecap: round;
-      transition: stroke-dashoffset 0.4s ease;
+      transition: stroke-dashoffset 0.5s ease;
     }
 
     .percentage {
@@ -72,22 +73,40 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 2.6rem;
+      font-size: 2.8rem;
       font-weight: bold;
+    }
+
+    .drunk-amount {
+      margin: 15px 0 25px;
+      font-size: 1.45rem;
+      font-weight: 600;
+    }
+
+    .drunk-amount .liters {
+      font-size: 2.1rem;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .drunk-amount .ml {
+      font-size: 1.1rem;
+      opacity: 0.9;
     }
 
     .stats {
       display: flex;
       justify-content: space-around;
-      margin: 15px 0;
-      font-size: 1.1rem;
+      margin: 10px 0 25px;
+      font-size: 1rem;
     }
 
     .stat-item { text-align: center; }
+    .stat-item .label { color: rgba(255,255,255,0.85); font-size: 0.9rem; }
     .stat-item .value {
       font-weight: bold;
-      color: var(--primary);
-      font-size: 1.4rem;
+      color: white;
+      font-size: 1.5rem;
     }
 
     .content { padding: 25px 20px; }
@@ -108,7 +127,7 @@
       text-align: center;
     }
 
-    input[type="number"]:focus {
+    input:focus {
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(33,150,243,0.15);
@@ -121,11 +140,11 @@
       color: white;
       border: none;
       border-radius: 16px;
-      font-size: 1.3rem;
+      font-size: 1.35rem;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.2s;
-      margin: 20px 0 10px;
+      margin: 20px 0 15px;
     }
 
     .add-btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
@@ -136,21 +155,21 @@
       flex-wrap: wrap;
     }
 
-    .reset-btn, .manual-reset-btn {
+    .reset-btn, .info-btn {
       flex: 1;
       padding: 14px;
       border: none;
       border-radius: 12px;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       cursor: pointer;
       color: white;
     }
 
-    .reset-btn { background: #4caf50; }
-    .reset-btn:hover { background: #388e3c; }
+    .reset-btn { background: #ff5252; }
+    .reset-btn:hover { background: #d32f2f; }
 
-    .manual-reset-btn { background: #ff5252; }
-    .manual-reset-btn:hover { background: #d32f2f; }
+    .info-btn { background: #4caf50; }
+    .info-btn:hover { background: #388e3c; }
 
     .last-reset {
       text-align: center;
@@ -174,15 +193,21 @@
       </svg>
       <div class="percentage">0%</div>
     </div>
-    
+
+    <!-- الكمية البارزة الجديدة -->
+    <div class="drunk-amount">
+      شربت الآن: <span class="liters" id="currentLiters">0.00</span> لتر
+      <br><span class="ml" id="currentMl">(0 مل)</span>
+    </div>
+
     <div class="stats">
       <div class="stat-item">
-        <div class="value" id="current">0</div>
-        <div>لتر</div>
+        <div class="value" id="goal">4</div>
+        <div class="label">الهدف اليومي</div>
       </div>
       <div class="stat-item">
-        <div class="value" id="goal">4</div>
-        <div>الهدف</div>
+        <div class="value" id="remaining">4.00</div>
+        <div class="label">المتبقي</div>
       </div>
     </div>
   </div>
@@ -201,8 +226,8 @@
     <button class="add-btn" id="addBtn">+ أضف 200 مل</button>
 
     <div class="reset-section">
-      <button class="reset-btn" id="resetAutoInfo">معلومات التصفير التلقائي</button>
-      <button class="manual-reset-btn" id="manualResetBtn">تصفير الآن</button>
+      <button class="info-btn" id="resetAutoInfo">معلومات التصفير</button>
+      <button class="reset-btn" id="manualResetBtn">تصفير الآن</button>
     </div>
 
     <div class="last-reset" id="lastResetText">آخر تصفير: —</div>
@@ -210,20 +235,21 @@
 </div>
 
 <script>
-  const currentEl = document.getElementById('current');
-  const goalEl = document.getElementById('goal');
-  const percentageEl = document.querySelector('.percentage');
-  const progressCircle = document.querySelector('.progress');
-  const goalInput = document.getElementById('goalInput');
-  const addAmountInput = document.getElementById('addAmount');
-  const addBtn = document.getElementById('addBtn');
-  const manualResetBtn = document.getElementById('manualResetBtn');
-  const lastResetText = document.getElementById('lastResetText');
+  const currentLitersEl = document.getElementById('currentLiters');
+  const currentMlEl     = document.getElementById('currentMl');
+  const percentageEl    = document.querySelector('.percentage');
+  const progressCircle  = document.querySelector('.progress');
+  const goalEl          = document.getElementById('goal');
+  const remainingEl     = document.getElementById('remaining');
+  const goalInput       = document.getElementById('goalInput');
+  const addAmountInput  = document.getElementById('addAmount');
+  const addBtn          = document.getElementById('addBtn');
+  const manualResetBtn  = document.getElementById('manualResetBtn');
+  const lastResetText   = document.getElementById('lastResetText');
 
-  // قراءة البيانات المحفوظة
-  let current = Number(localStorage.getItem('waterCurrent')) || 0;
-  let goal    = Number(localStorage.getItem('waterGoal'))    || 4;
-  let addAmount = Number(localStorage.getItem('waterAddAmount')) || 200;
+  let current    = Number(localStorage.getItem('waterCurrent')) || 0;
+  let goal       = Number(localStorage.getItem('waterGoal'))    || 4;
+  let addAmount  = Number(localStorage.getItem('waterAddAmount')) || 200;
   let lastResetTime = Number(localStorage.getItem('waterLastReset')) || Date.now();
 
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -233,24 +259,30 @@
     if (now - lastResetTime >= ONE_DAY_MS) {
       current = 0;
       lastResetTime = now;
-      localStorage.setItem('waterCurrent', current);
-      localStorage.setItem('waterLastReset', lastResetTime);
-      updateLastResetDisplay();
+      saveAll();
     }
+  }
+
+  function saveAll() {
+    localStorage.setItem('waterCurrent', current);
+    localStorage.setItem('waterGoal', goal);
+    localStorage.setItem('waterAddAmount', addAmount);
+    localStorage.setItem('waterLastReset', lastResetTime);
   }
 
   function updateLastResetDisplay() {
     const date = new Date(lastResetTime);
-    const options = { 
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: true 
-    };
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
     lastResetText.textContent = `آخر تصفير: ${date.toLocaleString('ar-SA', options)}`;
   }
 
   function updateDisplay() {
     const liters = (current / 1000).toFixed(2);
-    currentEl.textContent = liters;
+    const ml     = current;
+
+    currentLitersEl.textContent = liters;
+    currentMlEl.textContent     = `(${ml} مل)`;
+
     goalEl.textContent = goal.toFixed(1);
 
     const percent = Math.min((current / (goal * 1000)) * 100, 100);
@@ -258,16 +290,16 @@
 
     const dashoffset = 270 - (270 * percent / 100);
     progressCircle.style.strokeDashoffset = dashoffset;
+    progressCircle.style.stroke = percent >= 100 ? var(--success) : 'white';
 
-    progressCircle.style.stroke = percent >= 100 ? '#4caf50' : 'white';
+    // المتبقي
+    const remainingLiters = Math.max(goal - Number(liters), 0).toFixed(2);
+    remainingEl.textContent = remainingLiters;
 
-    localStorage.setItem('waterCurrent', current);
-    localStorage.setItem('waterGoal', goal);
-    localStorage.setItem('waterAddAmount', addAmount);
+    saveAll();
   }
 
-  // ------------------ الأحداث ------------------
-
+  // الأحداث
   goalInput.addEventListener('input', () => {
     goal = Number(goalInput.value) || 4;
     if (goal < 0.5) goal = 0.5;
@@ -280,7 +312,7 @@
     if (addAmount < 50) addAmount = 50;
     addAmountInput.value = addAmount;
     addBtn.textContent = `+ أضف ${addAmount} مل`;
-    localStorage.setItem('waterAddAmount', addAmount);
+    saveAll();
   });
 
   addBtn.addEventListener('click', () => {
@@ -289,17 +321,16 @@
   });
 
   manualResetBtn.addEventListener('click', () => {
-    if (confirm('هل تريد تصفير التقدم الآن؟\nسيبدأ العد التنازلي لـ24 ساعة من جديد')) {
+    if (confirm('هل تريد تصفير التقدم الآن؟\nسيبدأ العد الـ24 ساعة من جديد')) {
       current = 0;
       lastResetTime = Date.now();
-      localStorage.setItem('waterCurrent', current);
-      localStorage.setItem('waterLastReset', lastResetTime);
+      saveAll();
       updateDisplay();
       updateLastResetDisplay();
     }
   });
 
-  // تهيئة أولية
+  // تهيئة
   function init() {
     checkAndResetIfNeeded();
     goalInput.value = goal;
@@ -311,8 +342,8 @@
 
   init();
 
-  // فحص كل دقيقة (في حال بقي المتصفح مفتوحًا طويلاً)
-  setInterval(checkAndResetIfNeeded, 60 * 1000);
+  // فحص دوري كل دقيقة
+  setInterval(checkAndResetIfNeeded, 60000);
 </script>
 </body>
 </html>
