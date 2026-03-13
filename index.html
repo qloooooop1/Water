@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>تتبع شرب الماء</title>
+  <style>
+    :root {
+      --primary: #2196f3;
+      --primary-dark: #1976d2;
+      --light: #e3f2fd;
+      --gray: #757575;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #bbdefb);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+
+    .header {
+      background: var(--primary);
+      color: white;
+      padding: 30px 20px 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 1.9rem;
+      margin-bottom: 8px;
+    }
+
+    .progress-circle {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      margin: 25px auto 15px;
+    }
+
+    .progress-circle svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-circle circle {
+      fill: none;
+      stroke-width: 14;
+    }
+
+    .progress-circle .bg { stroke: rgba(255,255,255,0.25); }
+    .progress-circle .progress {
+      stroke: white;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.4s ease;
+    }
+
+    .percentage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.6rem;
+      font-weight: bold;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 15px 0;
+      font-size: 1.1rem;
+    }
+
+    .stat-item { text-align: center; }
+    .stat-item .value {
+      font-weight: bold;
+      color: var(--primary);
+      font-size: 1.4rem;
+    }
+
+    .content { padding: 25px 20px; }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--gray);
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      text-align: center;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(33,150,243,0.15);
+    }
+
+    .add-btn {
+      width: 100%;
+      padding: 18px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin: 20px 0 10px;
+    }
+
+    .add-btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
+
+    .reset-section {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .reset-btn, .manual-reset-btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: white;
+    }
+
+    .reset-btn { background: #4caf50; }
+    .reset-btn:hover { background: #388e3c; }
+
+    .manual-reset-btn { background: #ff5252; }
+    .manual-reset-btn:hover { background: #d32f2f; }
+
+    .last-reset {
+      text-align: center;
+      margin-top: 20px;
+      color: #555;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>تتبع شرب الماء</h1>
+    
+    <div class="progress-circle">
+      <svg viewBox="0 0 100 100">
+        <circle class="bg" cx="50" cy="50" r="43"></circle>
+        <circle class="progress" cx="50" cy="50" r="43" 
+                stroke-dasharray="270" stroke-dashoffset="270"></circle>
+      </svg>
+      <div class="percentage">0%</div>
+    </div>
+    
+    <div class="stats">
+      <div class="stat-item">
+        <div class="value" id="current">0</div>
+        <div>لتر</div>
+      </div>
+      <div class="stat-item">
+        <div class="value" id="goal">4</div>
+        <div>الهدف</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="goal-section">
+      <label>الهدف اليومي (لتر)</label>
+      <input type="number" id="goalInput" step="0.1" min="0.5" value="4">
+    </div>
+
+    <div class="add-section">
+      <label>كمية الإضافة بكل ضغطة (مل)</label>
+      <input type="number" id="addAmount" step="50" min="50" value="200">
+    </div>
+
+    <button class="add-btn" id="addBtn">+ أضف 200 مل</button>
+
+    <div class="reset-section">
+      <button class="reset-btn" id="resetAutoInfo">معلومات التصفير التلقائي</button>
+      <button class="manual-reset-btn" id="manualResetBtn">تصفير الآن</button>
+    </div>
+
+    <div class="last-reset" id="lastResetText">آخر تصفير: —</div>
+  </div>
+</div>
+
+<script>
+  const currentEl = document.getElementById('current');
+  const goalEl = document.getElementById('goal');
+  const percentageEl = document.querySelector('.percentage');
+  const progressCircle = document.querySelector('.progress');
+  const goalInput = document.getElementById('goalInput');
+  const addAmountInput = document.getElementById('addAmount');
+  const addBtn = document.getElementById('addBtn');
+  const manualResetBtn = document.getElementById('manualResetBtn');
+  const lastResetText = document.getElementById('lastResetText');
+
+  // قراءة البيانات المحفوظة
+  let current = Number(localStorage.getItem('waterCurrent')) || 0;
+  let goal    = Number(localStorage.getItem('waterGoal'))    || 4;
+  let addAmount = Number(localStorage.getItem('waterAddAmount')) || 200;
+  let lastResetTime = Number(localStorage.getItem('waterLastReset')) || Date.now();
+
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+  function checkAndResetIfNeeded() {
+    const now = Date.now();
+    if (now - lastResetTime >= ONE_DAY_MS) {
+      current = 0;
+      lastResetTime = now;
+      localStorage.setItem('waterCurrent', current);
+      localStorage.setItem('waterLastReset', lastResetTime);
+      updateLastResetDisplay();
+    }
+  }
+
+  function updateLastResetDisplay() {
+    const date = new Date(lastResetTime);
+    const options = { 
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true 
+    };
+    lastResetText.textContent = `آخر تصفير: ${date.toLocaleString('ar-SA', options)}`;
+  }
+
+  function updateDisplay() {
+    const liters = (current / 1000).toFixed(2);
+    currentEl.textContent = liters;
+    goalEl.textContent = goal.toFixed(1);
+
+    const percent = Math.min((current / (goal * 1000)) * 100, 100);
+    percentageEl.textContent = Math.round(percent) + '%';
+
+    const dashoffset = 270 - (270 * percent / 100);
+    progressCircle.style.strokeDashoffset = dashoffset;
+
+    progressCircle.style.stroke = percent >= 100 ? '#4caf50' : 'white';
+
+    localStorage.setItem('waterCurrent', current);
+    localStorage.setItem('waterGoal', goal);
+    localStorage.setItem('waterAddAmount', addAmount);
+  }
+
+  // ------------------ الأحداث ------------------
+
+  goalInput.addEventListener('input', () => {
+    goal = Number(goalInput.value) || 4;
+    if (goal < 0.5) goal = 0.5;
+    goalInput.value = goal;
+    updateDisplay();
+  });
+
+  addAmountInput.addEventListener('input', () => {
+    addAmount = Number(addAmountInput.value) || 200;
+    if (addAmount < 50) addAmount = 50;
+    addAmountInput.value = addAmount;
+    addBtn.textContent = `+ أضف ${addAmount} مل`;
+    localStorage.setItem('waterAddAmount', addAmount);
+  });
+
+  addBtn.addEventListener('click', () => {
+    current += addAmount;
+    updateDisplay();
+  });
+
+  manualResetBtn.addEventListener('click', () => {
+    if (confirm('هل تريد تصفير التقدم الآن؟\nسيبدأ العد التنازلي لـ24 ساعة من جديد')) {
+      current = 0;
+      lastResetTime = Date.now();
+      localStorage.setItem('waterCurrent', current);
+      localStorage.setItem('waterLastReset', lastResetTime);
+      updateDisplay();
+      updateLastResetDisplay();
+    }
+  });
+
+  // تهيئة أولية
+  function init() {
+    checkAndResetIfNeeded();
+    goalInput.value = goal;
+    addAmountInput.value = addAmount;
+    addBtn.textContent = `+ أضف ${addAmount} مل`;
+    updateDisplay();
+    updateLastResetDisplay();
+  }
+
+  init();
+
+  // فحص كل دقيقة (في حال بقي المتصفح مفتوحًا طويلاً)
+  setInterval(checkAndResetIfNeeded, 60 * 1000);
+</script>
+</body>
+</html>
